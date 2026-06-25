@@ -1,0 +1,221 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian,english]{babel}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\title{Angel-in-Pocket Shopping Assistant with GRA Nullification Engine\\
+\large Bilingual paper / Билингвальная статья}
+\author{qqewq}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\selectlanguage{english}
+We present \textit{Angel-in-Pocket Shopping Assistant with GRA Nullification Engine}, a graph-based shopping assistant designed to detect hostile sellers, suspicious reviews, and risky products. The system combines a local trust graph, a recursive equilibrium engine, and a nullification cascade to produce a trust score for each product and seller. Access to deeper analysis is controlled through subscription tiers.
+
+\selectlanguage{russian}
+Представлен \textit{Angel-in-Pocket Shopping Assistant with GRA Nullification Engine} — графовый шопинг-ассистент для выявления враждебных продавцов, подозрительных отзывов и рискованных товаров. Система объединяет локальный граф доверия, рекурсивный механизм равновесия и каскад обнуления, выдавая оценку доверия для каждого товара и продавца. Доступ к более глубокому анализу управляется через уровни подписки.
+\end{abstract}
+
+\section{Introduction / Введение}
+
+\selectlanguage{english}
+Online shopping is increasingly affected by fake reviews, manipulative sellers, and adversarial rating behavior. A practical assistant must therefore evaluate not only product metadata but also the surrounding interaction graph. In this paper, we describe a system that models shopping risk as a graph process and resolves it with a GRA-inspired nullification engine.
+
+\selectlanguage{russian}
+Онлайн-шопинг всё сильнее страдает от фальшивых отзывов, манипулятивных продавцов и враждебного поведения в рейтингах. Поэтому практический ассистент должен оценивать не только сами товары, но и граф взаимодействий вокруг них. В этой статье мы описываем систему, которая моделирует риск покупки как графовый процесс и разрешает его с помощью GRA-инспирированного движка обнуления.
+
+\section{System Overview / Обзор системы}
+
+\selectlanguage{english}
+The system consists of four layers:
+\begin{itemize}
+    \item a graph construction layer for products, sellers, users, and reviews;
+    \item a suspicion initialization layer;
+    \item a recursive equilibrium layer;
+    \item a nullification cascade layer.
+\end{itemize}
+The final output is a trust score in the range $[0,1]$, where larger values indicate safer objects.
+
+\selectlanguage{russian}
+Система состоит из четырёх уровней:
+\begin{itemize}
+    \item слой построения графа для товаров, продавцов, пользователей и отзывов;
+    \item слой инициализации подозрительности;
+    \item слой рекурсивного равновесия;
+    \item слой каскада обнуления.
+\end{itemize}
+Итоговый результат — оценка доверия в диапазоне $[0,1]$, где большие значения означают более безопасный объект.
+
+\section{Graph Model / Графовая модель}
+
+\selectlanguage{english}
+Let $G=(V,E)$ be an undirected weighted graph. Nodes represent products, sellers, users, and reviews. Edges encode relations such as \textit{sells}, \textit{has\_review}, and \textit{wrote}. Each node $v_i \in V$ has an initial suspicion score $s_i^{(0)} \in [0,1]$.
+
+\selectlanguage{russian}
+Пусть $G=(V,E)$ — неориентированный взвешенный граф. Узлы представляют товары, продавцов, пользователей и отзывы. Рёбра кодируют связи вида \textit{sells}, \textit{has\_review} и \textit{wrote}. Каждый узел $v_i \in V$ имеет начальный уровень подозрения $s_i^{(0)} \in [0,1]$.
+
+\subsection{Suspicion Initialization / Инициализация подозрительности}
+
+\selectlanguage{english}
+The initial score is computed from simple heuristics:
+cheap price, extreme ratings, very young accounts, or highly polarized sentiment increase suspicion. Let $h_i$ denote the heuristic contribution of node $i$, then:
+\[
+s_i^{(0)} = \min(1, h_i).
+\]
+
+\selectlanguage{russian}
+Начальная оценка вычисляется по простым эвристикам:
+низкая цена, крайние оценки, очень новые аккаунты и сильная полярность тональности увеличивают подозрение. Пусть $h_i$ — эвристический вклад узла $i$, тогда:
+\[
+s_i^{(0)} = \min(1, h_i).
+\]
+
+\section{Equilibrium Layer / Слой равновесия}
+
+\selectlanguage{english}
+The recursive equilibrium engine updates node states using graph influence. Let $A$ be the weighted adjacency matrix and let $s^{(t)}$ be the suspicion vector at iteration $t$. The update rule is:
+\[
+s_i^{(t+1)} = \mathrm{clip}\left(s_i^{(0)} + \alpha \sum_j A_{ji}s_j^{(t)},\,0,\,1\right),
+\]
+where $\alpha \in [0,1]$ is the influence weight.
+
+\selectlanguage{russian}
+Движок рекурсивного равновесия обновляет состояния узлов с учётом влияния графа. Пусть $A$ — взвешенная матрица смежности, а $s^{(t)}$ — вектор подозрений на шаге $t$. Тогда правило обновления:
+\[
+s_i^{(t+1)} = \mathrm{clip}\left(s_i^{(0)} + \alpha \sum_j A_{ji}s_j^{(t)},\,0,\,1\right),
+\]
+где $\alpha \in [0,1]$ — вес влияния.
+
+\subsection{Convergence Criterion / Критерий сходимости}
+
+\selectlanguage{english}
+The process is iterated until
+\[
+\|s^{(t+1)} - s^{(t)}\| < \varepsilon,
+\]
+or until a maximum number of iterations is reached. The resulting vector is interpreted as an equilibrium suspicion state.
+
+\selectlanguage{russian}
+Процесс повторяется до тех пор, пока
+\[
+\|s^{(t+1)} - s^{(t)}\| < \varepsilon,
+\]
+либо пока не будет достигнут лимит итераций. Полученный вектор интерпретируется как равновесное состояние подозрительности.
+
+\section{Nullification Cascade / Каскад обнуления}
+
+\selectlanguage{english}
+After equilibrium is computed, nodes above a threshold $\tau$ are marked as active. The nullification cascade then propagates through neighbors, increasing their adversarial degree until the local risk stabilizes. If a node exceeds the threshold, its neighborhood becomes partially nullified.
+
+\selectlanguage{russian}
+После вычисления равновесия узлы выше порога $\tau$ помечаются как активные. Затем каскад обнуления распространяется по соседям, увеличивая их «враждебную степень» до стабилизации локального риска. Если узел превышает порог, его окрестность частично обнуляется.
+
+\subsection{Trust Score / Индекс доверия}
+
+\selectlanguage{english}
+For a target product, the final trust score is defined as:
+\[
+T = 1 - d,
+\]
+where $d$ is the adversarial degree of the product after nullification. Thus, $T \approx 1$ means a trustworthy product, while $T \approx 0$ indicates high risk.
+
+\selectlanguage{russian}
+Для целевого товара итоговая оценка доверия задаётся как:
+\[
+T = 1 - d,
+\]
+где $d$ — степень враждебности товара после обнуления. Таким образом, $T \approx 1$ означает надёжный товар, а $T \approx 0$ — высокий риск.
+
+\section{Subscription Tiers / Уровни подписки}
+
+\selectlanguage{english}
+The system uses subscription tiers to control the depth of analysis:
+\begin{itemize}
+    \item \textbf{free} — no detailed safety report;
+    \item \textbf{basic} — shallow graph analysis;
+    \item \textbf{premium} — deeper seller and review analysis;
+    \item \textbf{enterprise} — maximum depth and enriched diagnostics.
+\end{itemize}
+This design allows the platform to monetize advanced trust computation while keeping the basic service accessible.
+
+\selectlanguage{russian}
+Система использует уровни подписки для контроля глубины анализа:
+\begin{itemize}
+    \item \textbf{free} — без детального отчёта о безопасности;
+    \item \textbf{basic} — поверхностный анализ графа;
+    \item \textbf{premium} — более глубокий анализ продавцов и отзывов;
+    \item \textbf{enterprise} — максимальная глубина и расширенная диагностика.
+\end{itemize}
+Такая схема позволяет монетизировать продвинутые вычисления доверия, сохраняя базовый доступ открытым.
+
+\section{Implementation Notes / Примечания по реализации}
+
+\selectlanguage{english}
+The backend is implemented with FastAPI, PostgreSQL, SQLAlchemy, and Stripe. The graph layer relies on NetworkX, while numerical updates use NumPy. Optional Celery tasks can recompute product safety asynchronously after new reviews arrive.
+
+\selectlanguage{russian}
+Бэкенд реализован на FastAPI, PostgreSQL, SQLAlchemy и Stripe. Графовый слой опирается на NetworkX, а численные обновления выполняются через NumPy. Опциональные задачи Celery позволяют асинхронно пересчитывать безопасность товара после появления новых отзывов.
+
+\section{Applications / Применения}
+
+\subsection{Practical Use / Практическое использование}
+
+\selectlanguage{english}
+The system can be used as:
+\begin{itemize}
+    \item a shopping risk detector;
+    \item a seller trust estimator;
+    \item a review quality filter;
+    \item a premium analytics layer for e-commerce.
+\end{itemize}
+
+\selectlanguage{russian}
+Систему можно использовать как:
+\begin{itemize}
+    \item детектор риска при покупке;
+    \item оценщик доверия к продавцу;
+    \item фильтр качества отзывов;
+    \item премиум-слой аналитики для e-commerce.
+\end{itemize}
+
+\subsection{Limitations / Ограничения}
+
+\selectlanguage{english}
+The current implementation uses heuristic suspicion scores and graph propagation. It should be treated as a reference architecture rather than a final fraud detection model. Better NLP, temporal analysis, and calibration data would improve the system substantially.
+
+\selectlanguage{russian}
+Текущая реализация использует эвристические оценки подозрительности и графовое распространение. Её следует рассматривать как эталонную архитектуру, а не как финальную антифрод-модель. Значительно улучшить систему помогут более сильный NLP, временной анализ и калибровочные данные.
+
+\section{Conclusion / Заключение}
+
+\selectlanguage{english}
+Angel-in-Pocket with GRA Nullification Engine demonstrates how a recursive graph-based trust model can support safer online shopping. By combining equilibrium computation, nullification cascade, and subscription-aware access control, the project forms a practical basis for a commercial trust assistant.
+
+\selectlanguage{russian}
+Angel-in-Pocket с GRA Nullification Engine показывает, как рекурсивная графовая модель доверия может поддерживать более безопасный онлайн-шопинг. Объединяя вычисление равновесия, каскад обнуления и контроль доступа через подписки, проект формирует практическую основу для коммерческого ассистента доверия.
+
+\begin{thebibliography}{9}
+
+\bibitem{gra}
+GRA-Nullification-Equilibrium project, qqewq GitHub repository.
+
+\bibitem{fastapi}
+FastAPI documentation and ecosystem.
+
+\bibitem{networkx}
+NetworkX documentation for graph modeling.
+
+\bibitem{stripe}
+Stripe API documentation for subscription billing.
+
+\end{thebibliography}
+
+\end{document}
